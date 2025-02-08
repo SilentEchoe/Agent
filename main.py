@@ -1,28 +1,15 @@
-#导入LangChain Hub
-from langchain import hub
-# 从LangChain Hub中获取ReAct的提示
-prompt = hub.pull("hwchase17/react")
-print(prompt)
-#导入OpenAI
+from dotenv import load_dotenv
 from langchain_openai import OpenAI
-llm = OpenAI()
-from langchain_community.utilities import SerpAPIWrapper
-from langchain.agents.tools import Tool
-#实例化SerpAPIWrapper
-search = SerpAPIWrapper()
-tools = [
-    Tool(
-        name="Search",
-        func = search.run,
-        description="当大模型没有相关知识时，用于搜索知识"
-    )
-]
-from langchain.agents import create_react_agent
-#构建ReAct Agent
-agent = create_react_agent(llm,tools,prompt)
-#导入AgentExecutor
-from langchain.agents import AgentExecutor
-agent_executor = AgentExecutor(agent=agent,tools=tools,verbose = True)
-#调用AgentExecutor
-agent_executor.invoke({"input:":"当前Agent最新研究进展是什么？"})
+from langchain_community.llms import Cohere, HuggingFaceHub
+from langchain.model_laboratory import ModelLaboratory
 
+#初始化环境变量
+load_dotenv()
+
+OpenAI = OpenAI(temperature=0.1)
+cohere =Cohere(model="command",temperature=0.1)
+huggingface = HuggingFaceHub(repo_id="tiiuae/falcon-7b",model_kwargs={'temperature':0.1})
+#创建一个模型实验室的实例，整合OpenAI,cohere,huggingface
+model_lab = ModelLaboratory.from_llms([OpenAI,cohere,huggingface])
+#使用模型实验室比较不同模型对同一个问题的答案
+model_lab.compare("樱花源于哪个国家")
